@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LocationRest.Models
 {
-    [BsonCollection("User")]  // Adjusted to match the actual collection name in MongoDB
+    [BsonCollection("User")]  
     public class User
     {
         [BsonId]

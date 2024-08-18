@@ -10,10 +10,14 @@ namespace LocationRest.Controllers
     public class ReservationController : ControllerBase
     {
         private readonly IMongoCollection<Reservation> _reservations;
+        private readonly IMongoCollection<Car> _cars;
+        private readonly IMongoCollection<User> _users;
 
         public ReservationController(IMongoDatabase database)
         {
             _reservations = database.GetCollection<Reservation>("Reservation");
+            _cars = database.GetCollection<Car>("Car");
+            _users = database.GetCollection<User>("User");
         }
 
         [HttpGet]
@@ -41,10 +45,39 @@ namespace LocationRest.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var filter = Builders<Reservation>.Filter.Eq(x => x.Id, id);
-
             var reservation = await _reservations.Find(filter).FirstOrDefaultAsync();
 
-            return reservation is not null ? Ok(reservation) : NotFound();
+            if (reservation == null)
+                return NotFound();
+
+            var carFilter = Builders<Car>.Filter.Eq(x => x.Id, reservation.CarId);
+            var car = await _cars.Find(carFilter).FirstOrDefaultAsync();
+
+            var userFilter = Builders<User>.Filter.Eq(x => x.Id, reservation.UserId);
+            var user = await _users.Find(userFilter).FirstOrDefaultAsync();
+
+            var reservationDetail = new
+            {
+                ReservationId = reservation.Id,
+                DateDeparture = reservation.DateDeparture,
+                DateReturn = reservation.DateReturn,
+                TotalPrice = reservation.TotalPrice,
+                PaymentStatus = reservation.PaymentStatus,
+                Attribute = reservation.Attribute,
+                Car = car != null ? new
+                {
+                    Brand = car.Brand,
+                    Model = car.Model,
+                    Color = car.Color
+                } : null,
+                User = user != null ? new
+                {
+                    FullName = user.FullName,
+                    Email = user.Email
+                } : null
+            };
+
+            return Ok(reservationDetail);
         }
 
         [HttpPost]
@@ -64,8 +97,10 @@ namespace LocationRest.Controllers
         {
             var filter = Builders<Reservation>.Filter.Eq(x => x.Id, id);
 
-            await _reservations.DeleteOneAsync(filter);
+            var result = await _reservations.DeleteOneAsync(filter);
 
+            if (result.DeletedCount == 0)
+                return NotFound();
             return Ok();
         }
 
@@ -77,7 +112,7 @@ namespace LocationRest.Controllers
                 return BadRequest("User ID mismatch");
             }
 
-            var filter = Builders<Reservation>.Filter.Eq(x => x.Id, _id); // or use _id field depending on your schema
+            var filter = Builders<Reservation>.Filter.Eq(x => x.Id, _id);
 
             var userExists = await _reservations.Find(filter).FirstOrDefaultAsync();
             if (userExists == null)
@@ -93,6 +128,46 @@ namespace LocationRest.Controllers
             }
 
             return Ok(reservation);
+        }
+
+
+        [HttpGet("user/{userId:int}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetOneUserReservation(int userId)
+        {
+            var filter = Builders<Reservation>.Filter.Eq(x => x.UserId, userId);
+            var reservations = await _reservations.Find(filter).ToListAsync();
+
+            if (reservations.Count == 0)
+                return NotFound("No reservations found for this user.");
+
+
+            var reservationDetails = new List<object>();
+
+            foreach (var reservation in reservations)
+            {
+                var carFilter = Builders<Car>.Filter.Eq(x => x.Id, reservation.CarId);
+                var car = await _cars.Find(carFilter).FirstOrDefaultAsync();
+
+                var reservationDetail = new
+                {
+                    ReservationId = reservation.Id,
+                    DateDeparture = reservation.DateDeparture,
+                    DateReturn = reservation.DateReturn,
+                    TotalPrice = reservation.TotalPrice,
+                    PaymentStatus = reservation.PaymentStatus,
+                    Attribute = reservation.Attribute,
+                    Car = car != null ? new
+                    {
+                        Brand = car.Brand,
+                        Model = car.Model,
+                        Color = car.Color
+                    } : null
+                };
+
+                reservationDetails.Add(reservationDetail);
+            }
+            
+            return Ok(reservationDetails);
         }
     }
 }

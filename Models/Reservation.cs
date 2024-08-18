@@ -37,6 +37,11 @@ namespace LocationRest.Models
         [BsonElement("Attribute")]
         [Required(ErrorMessage = "The attribute is required.")]
         public string Attribute { get; set; }
+
+        [BsonElement("UserId")]
+        [Required(ErrorMessage = "The user ID is required.")]
+        public int UserId { get; set; }
+
     }
     public class BsonCollectionAttribute : Attribute
     {

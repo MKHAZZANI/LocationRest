@@ -10,12 +10,18 @@ namespace LocationRest.Controllers
     public class UserController : ControllerBase
     {
         private readonly IMongoCollection<User> _users;
+        //this is for geting the reservatios for a specific client
+        private readonly IMongoCollection<Reservation> _reservations;
+
+        private readonly IMongoCollection<Car> _cars;
 
         //public UserController(MongoDBSettings mongoDBSettings)
         public UserController(IMongoDatabase database)
         {
             //_users = mongoDBSettings.Database?.GetCollection<User>("User");
             _users = database.GetCollection<User>("User");
+            _reservations = database.GetCollection<Reservation>("Reservation");
+            _cars = database.GetCollection<Car>("Car");
         }
 
         [HttpGet]
@@ -94,6 +100,69 @@ namespace LocationRest.Controllers
             await _users.DeleteOneAsync(filter);
 
             return Ok();
+        }
+
+
+        [HttpGet("{id:int}/reservations")]
+        public async Task<ActionResult<IEnumerable<Reservation>>> GetClientReservations(int id)
+        {
+            // Find the user
+            var userFilter = Builders<User>.Filter.Eq(x => x.Id, id);
+            var user = await _users.Find(userFilter).FirstOrDefaultAsync();
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            if (user.Role != UserRole.Client)
+            {
+                return BadRequest("User is not a client");
+            }
+
+            // Fetch all reservations for this user
+            var reservationFilter = Builders<Reservation>.Filter.Eq(x => x.UserId, id);
+            var reservations = await _reservations.Find(reservationFilter).ToListAsync();
+
+            if (reservations.Count == 0)
+            {
+                return Ok(new { Message = "No reservations found for this client." });
+            }
+
+            // Create a list to hold reservation details
+            var reservationDetails = new List<object>();
+
+            foreach (var reservation in reservations)
+            {
+                // Fetch car details for each reservation
+                var carFilter = Builders<Car>.Filter.Eq(x => x.Id, reservation.CarId);
+                var car = await _cars.Find(carFilter).FirstOrDefaultAsync();
+
+                var reservationDetail = new
+                {
+                    ReservationId = reservation.Id,
+                    DateDeparture = reservation.DateDeparture,
+                    DateReturn = reservation.DateReturn,
+                    TotalPrice = reservation.TotalPrice,
+                    PaymentStatus = reservation.PaymentStatus,
+                    Attribute = reservation.Attribute,
+                    Car = car != null ? new
+                    {
+                        Brand = car.Brand,
+                        Model = car.Model,
+                        Color = car.Color
+                    } : null
+                };
+
+                reservationDetails.Add(reservationDetail);
+            }
+
+            return Ok(new
+            {
+                ClientName = user.FullName,
+                ClientEmail = user.Email,
+                Reservations = reservationDetails
+            });
         }
 
     }

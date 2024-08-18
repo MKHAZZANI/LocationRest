@@ -43,3 +43,4 @@ E:\SummerProoj\LocationRest\LocationRest\bin\Debug\net8.0\ZstdSharp.dll
 E:\SummerProoj\LocationRest\LocationRest\bin\Debug\net8.0\runtimes\linux\native\libmongocrypt.so
 E:\SummerProoj\LocationRest\LocationRest\bin\Debug\net8.0\runtimes\osx\native\libmongocrypt.dylib
 E:\SummerProoj\LocationRest\LocationRest\bin\Debug\net8.0\runtimes\win\native\mongocrypt.dll
+E:\SummerProoj\LocationRest\LocationRest\obj\Debug\net8.0\LocationRest.sourcelink.json

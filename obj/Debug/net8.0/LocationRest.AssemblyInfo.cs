@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LocationRest")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+04d6b9adf38c8f2c7b3973899ce16d8af9112e35")]
 [assembly: System.Reflection.AssemblyProductAttribute("LocationRest")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LocationRest")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
